@@ -7,8 +7,6 @@
   (:require-macros
    [cljs.core.async.macros :refer [go go-loop]]))
 
-(def create-socket chord/ws-ch)
-
 (defn websocket-url [path]
   (if (str/starts-with? path "/")
     (str (if (= "https:" (-> js/document .-location .-protocol))
@@ -49,15 +47,6 @@
     {:buffer-chan (chan)
      :state       :initializing}))
 
-(defn start-websocket [_ create-socket {:keys [path format]
-                                      :as   socket-config}]
-  (go
-    (let [url (websocket-url path)
-          {:keys [ws-channel error]} (<! (create-socket url {:format format}))]
-      (if error
-        (rf/dispatch [::error path error])
-        (rf/dispatch [::connected ws-channel socket-config])))))
-
 (rf/reg-event-db
   ::log
   (fn [db [_ path type time message]]
@@ -92,7 +81,15 @@
                                                  :buffer-chan buffer-chan
                                                  :state       :connected})})))
 
-(rf/reg-fx ::open (partial start-websocket create-socket))
+(rf/reg-fx ::open
+           (fn [_ {:keys [path format]
+                   :as   socket-config}]
+             (go
+              (let [url (websocket-url path)
+                    {:keys [ws-channel error]} (<! (chord/ws-ch url {:format format}))]
+                (if error
+                  (rf/dispatch [::error path error])
+                  (rf/dispatch [::connected ws-channel socket-config]))))))
 
 (rf/reg-event-fx ::close (fn [{:keys [db]} [_ path]]
                           (let [{:keys [buffer-chan ws-channel]} (socket-for db path)]
