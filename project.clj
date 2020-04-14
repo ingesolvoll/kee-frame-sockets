@@ -1,4 +1,4 @@
-(defproject kee-frame-sockets "0.0.1"
+(defproject kee-frame-sockets "0.0.2"
   :description "Websocket support for kee-frame"
   :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"}
