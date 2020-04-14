@@ -17,16 +17,11 @@
     ;; Consider this an url for now.
     path))
 
-
-(defn date []
-  #?(:clj  (java.util.Date.)
-     :cljs (js/Date.)))
-
 (defn- receive-messages! [ws-chan {:keys [path dispatch]
                                    :as   socket-config}]
   (go-loop []
     (if-let [message (<! ws-chan)]
-      (do (when false (rf/dispatch [::log path :received (date) message]))
+      (do (when false (rf/dispatch [::log path :received (js/Date.) message]))
           (rf/dispatch [dispatch message])
           (recur))
       (rf/dispatch [::disconnected socket-config]))))
@@ -37,7 +32,7 @@
     (go-loop []
       (when-let [message (<! buffer-chan)]                  ;; buffer-chan may be closed
         (if (>! ws-chan (wrap-message message))             ;; if ws-chan is closed put message back in buffer-chan
-          (do (when false (rf/dispatch [::log path :sent (date) message]))
+          (do (when false (rf/dispatch [::log path :sent (js/Date.) message]))
               (recur))
           (>! buffer-chan message))))))
 
@@ -100,7 +95,7 @@
 (rf/reg-event-fx ::send (fn [{:keys [db]} [_ path message]]
                          (let [{:keys [buffer-chan state] :as socket-config} (socket-for db path)]
                            (go (>! buffer-chan message))
-                           (when false {:dispatch [::log path :buffered (date) message]})
+                           (when false {:dispatch [::log path :buffered (js/Date.) message]})
                            (when (= :initializing state)
                              {:db (update-in db [::sockets path] merge socket-config)}))))
 
