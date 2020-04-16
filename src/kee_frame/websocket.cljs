@@ -77,8 +77,8 @@
                                                  :state       :connected})})))
 
 (rf/reg-fx ::open
-           (fn [_ {:keys [path format]
-                   :as   socket-config}]
+           (fn [{:keys [path format]
+                 :as   socket-config}]
              (go
               (let [url (websocket-url path)
                     {:keys [ws-channel error]} (<! (chord/ws-ch url {:format format}))]
